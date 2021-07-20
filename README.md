@@ -2,17 +2,15 @@
 
 Inspired by [Stocks.ml](https://stocks.ml/) and [ml_investment](https://github.com/fartuk/ml_investment) lib.
 
-## Libraries in use:
-* [backtrader](https://github.com/mementum/backtrader)
+1. As if I trade using Tinkoff broker, so I get list of tickers from [TKS website](https://www.tinkoff.ru/invest/stocks/?country=Foreign&orderType=Asc&sortType=ByName&start=0&end=12000)
+2. I use [Quandl](https://www.quandl.com/) as primary data source (paid)
 
 ## Tasks
-### Quickstart
-* [ ] Load financial data from Yahoo Finance
+* [x] Load financial data from Yahoo Finance
+* [ ] Load financial data from Quandl
 * [ ] Extract featureset
-* [ ] Train any model
+* [ ] Train model
 * [ ] Get stock portfolio
-
-### Other
 * [ ] Integrate with TKS Broker
 
 ## Articles to read:
@@ -23,3 +21,6 @@ Inspired by [Stocks.ml](https://stocks.ml/) and [ml_investment](https://github.c
 ## Other links
 * [Quandl Data](https://www.quandl.com/)
 * [Artur's Tinkoff pulse](https://www.tinkoff.ru/invest/social/profile/fattakhov_artur/?utm_source=share)
+
+## Libraries in use:
+* [backtrader](https://github.com/mementum/backtrader)

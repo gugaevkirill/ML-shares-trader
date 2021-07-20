@@ -2,8 +2,8 @@ import time
 from functools import reduce
 from typing import Dict, Any
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import requests
 
 from ml_trader.utils import save_json, check_create_folder
@@ -110,3 +110,10 @@ def download_ticker_quarterly(ticker: str, base_path: str) -> None:
     filepath = '{}/yahoo/quarterly/{}.csv'.format(base_path, ticker)
     check_create_folder(filepath)
     quarterly_df.to_csv(filepath, index=False)
+
+
+def download_yahoo(ticker: str, base_path: str) -> None:
+    download_ticker_base(ticker, base_path=base_path)
+    time.sleep(np.random.uniform(0, 0.5))
+    download_ticker_quarterly(ticker, base_path=base_path)
+    time.sleep(np.random.uniform(0, 0.5))
