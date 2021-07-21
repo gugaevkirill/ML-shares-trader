@@ -18,8 +18,15 @@ if __name__ == '__main__':
     # tickers.zip extracted to SHARADAR_TICKERS_6cc728d11002ab9cb99aa8654a6b9f4e.csv
 
     # Quandl #2
+    # multiprocess_ticker_download(
+    #     path='datatables/SHARADAR/SF1?ticker={ticker}',
+    #     tickers=config["tickers_quandl"],
+    #     base_path=datasets_path + '/quandl/core_fundamental',
+    # )
+
+    # Quandl #3
     multiprocess_ticker_download(
-        path='datatables/SHARADAR/SF1?ticker={ticker}',
+        path='datatables/SHARADAR/DAILY?ticker={ticker}',
         tickers=config["tickers_quandl"],
-        base_path=datasets_path + '/quandl/core_fundamental',
+        base_path=datasets_path + '/quandl/daily',
     )
