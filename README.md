@@ -7,7 +7,7 @@ Inspired by [Stocks.ml](https://stocks.ml/) and [ml_investment](https://github.c
 
 ## Tasks
 * [x] Load financial data from Yahoo Finance
-* [ ] Load financial data from Quandl
+* [x] Load financial data from Quandl
 * [ ] Extract featureset
 * [ ] Train model
 * [ ] Get stock portfolio

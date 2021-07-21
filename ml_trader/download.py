@@ -1,6 +1,6 @@
 import os
 
-from ml_trader.data_loaders.quandl import multiprocess_ticker_download
+from ml_trader.data_loaders.quandl import download_commodities
 from ml_trader.utils import load_config
 
 if __name__ == '__main__':
@@ -11,7 +11,7 @@ if __name__ == '__main__':
     # download_yahoo('AAPL', base_path=datasets_path)
 
     # Quandl #1
-    # zip_download(
+    # download_base_zip(
     #     'datatables/SHARADAR/TICKERS?qopts.export=true',
     #     datasets_path + '/quandl/tickers.zip'
     # )
@@ -25,8 +25,11 @@ if __name__ == '__main__':
     # )
 
     # Quandl #3
-    multiprocess_ticker_download(
-        path='datatables/SHARADAR/DAILY?ticker={ticker}',
-        tickers=config["tickers_quandl"],
-        base_path=datasets_path + '/quandl/daily',
-    )
+    # multiprocess_ticker_download(
+    #     path='datatables/SHARADAR/DAILY?ticker={ticker}',
+    #     tickers=config["tickers_quandl"],
+    #     base_path=datasets_path + '/quandl/daily',
+    # )
+
+    # Quandl #4 commodities
+    download_commodities(datasets_path + '/quandl/commodity')
