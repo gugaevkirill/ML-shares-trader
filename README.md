@@ -3,7 +3,7 @@
 Inspired by [Stocks.ml](https://stocks.ml/) and [ml_investment](https://github.com/fartuk/ml_investment) lib.
 
 1. As if I trade using Tinkoff broker, so I get list of tickers from [TKS website](https://www.tinkoff.ru/invest/stocks/?country=Foreign&orderType=Asc&sortType=ByName&start=0&end=12000)
-2. I use [Quandl](https://www.quandl.com/) as primary data source (paid)
+2. I use [Quandl SF1](https://www.quandl.com/) as primary data source (paid, $30/mon for 5yrs history)
 
 ## Tasks
 * [x] Load financial data from Yahoo Finance

@@ -1,8 +1,9 @@
 import copy
+import json
 import os
 import time
 from concurrent.futures import ProcessPoolExecutor
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -50,6 +51,11 @@ def _format_quandl_url(path: str) -> str:
     return f'{url}&api_key={api_key}' if '?' in url else f'{url}?api_key={api_key}'
 
 
+# ----
+# Data loaders
+# ----
+
+
 def download_base_zip(path: str, save_path: str) -> None:
     full_url = _format_quandl_url(path)
     r_info = requests.get(full_url)
@@ -58,7 +64,7 @@ def download_base_zip(path: str, save_path: str) -> None:
         return
 
     zip_link = r_info.json()['datatable_bulk_download']['file']['link']
-    print(f'Started downloading ZPI from {zip_link}')
+    print(f'Started downloading ZIP from {zip_link}')
     r_file = requests.get(zip_link)
     if r_file.status_code != 200:
         print(f'Error: {zip_link}, {r_file.status_code}')
@@ -67,21 +73,6 @@ def download_base_zip(path: str, save_path: str) -> None:
     check_create_folder(save_path)
     with open(save_path, 'wb') as f:
         f.write(r_file.content)
-
-
-def quandl_base_to_df(filepath: str, tickers: List[str]) -> pd.DataFrame:
-    tickers_df = pd.read_csv(filepath)
-    tickers_df = tickers_df[tickers_df['table'] == 'SF1']
-
-    tmp = pd.DataFrame()
-    tmp['ticker'] = tickers
-    tmp['flag'] = True
-    tickers_df = pd.merge(tickers_df, tmp, on='ticker', how='left')
-    tickers_df['flag'] = tickers_df['flag'].fillna(False)
-    tickers_df = tickers_df[tickers_df['flag']]
-    del tickers_df['flag']
-
-    return tickers_df.reset_index(drop=True)
 
 
 def _batch_ticker_download(
@@ -116,7 +107,7 @@ def multiprocess_ticker_download(
         path: str,
         tickers: List[str],
         base_path: str,
-        batch_size: int = 2,
+        batch_size: int = 4,
         n_jobs: int = 4,
         skip_exists: bool = True,
 ) -> None:
@@ -155,3 +146,121 @@ def download_commodities(base_path: str) -> None:
         code_data = r.json()
         filepath = '{}/{}.json'.format(base_path, code.replace('/', '_'))
         save_json(filepath, code_data)
+
+
+# ----
+# Data processors
+# ----
+
+def quandl_base_to_df(filepath: str, tickers: List[str]) -> pd.DataFrame:
+    tickers_df = pd.read_csv(filepath)
+    tickers_df = tickers_df[tickers_df['table'] == 'SF1']
+
+    tmp = pd.DataFrame()
+    tmp['ticker'] = tickers
+    tmp['flag'] = True
+    tickers_df = pd.merge(tickers_df, tmp, on='ticker', how='left')
+    tickers_df['flag'] = tickers_df['flag'].fillna(False)
+    tickers_df = tickers_df[tickers_df['flag']]
+    del tickers_df['flag']
+
+    return tickers_df.reset_index(drop=True)
+
+
+def load_quandl_df(path: str) -> pd.DataFrame:
+    with open(path, "r") as read_file:
+        data = json.load(read_file)
+
+    df = pd.DataFrame(data['datatable']['data'])
+    columns = [x['name'] for x in data['datatable']['columns']]
+    if len(df) == 0:
+        df = pd.DataFrame(columns=columns)
+    else:
+        df.columns = columns
+
+    df = df.infer_objects()
+    return df
+
+
+def quandl_quarterly_to_df(
+        base_path: str,
+        tickers: List[str],
+        max_quarters: Optional[int] = None,
+        dimension: str = 'ARQ',
+) -> pd.DataFrame:
+    """
+    :param dimension: The way to look on company metrics.
+                      https://www.quandl.com/databases/SF1/documentation?anchor=dimensions
+    """
+    data_frames: List[pd.DataFrame] = []
+
+    for ticker in tickers:
+        path = f'{base_path}/{ticker}.json'
+        if not os.path.exists(path):
+            raise RuntimeError(f'Error: {ticker}')
+
+        df = load_quandl_df(path)
+        df = df[df['dimension'] == dimension]
+
+        df['date'] = df['datekey'].astype(np.datetime64)
+        df = df.sort_values('date', ascending=False)
+        del df['datekey']
+
+        if max_quarters is not None:
+            df = df[:max_quarters]
+
+        data_frames.append(df)
+
+    result = pd.concat(data_frames, axis=0).reset_index(drop=True)
+    return result
+
+
+def quandl_daily_to_df(
+        base_path: str,
+        tickers: List[str],
+) -> pd.DataFrame:
+    data_frames: List[pd.DataFrame] = []
+
+    for ticker in tickers:
+        path = f'{base_path}/{ticker}.json'
+        if not os.path.exists(path):
+            raise RuntimeError(f'Error: {ticker}')
+
+        df = load_quandl_df(path)
+
+        df['date'] = df['date'].astype(np.datetime64)
+        df = df.sort_values('date', ascending=False)
+
+        df['marketcap'] = df['marketcap'].astype(float) * 1e6
+        df.infer_objects()
+
+        data_frames.append(df)
+
+    result = pd.concat(data_frames, axis=0).reset_index(drop=True)
+    return result
+
+
+def quandl_commodity_to_df(
+        base_path: str,
+) -> pd.DataFrame:
+    data_frames: List[pd.DataFrame] = []
+
+    for code in QUANDL_COMMODITY_CODES:
+        path = f'{base_path}/{code.replace("/", "_")}.json'
+        if not os.path.exists(path):
+            print(f'Error: {code}')
+
+        with open(path, "r") as read_file:
+            data = json.load(read_file)
+            data = np.array(data['dataset']['data'])
+
+        df = pd.DataFrame()
+        df['date'] = data[:, 0].astype(np.datetime64)
+        df['price'] = data[:, 1].astype('float')
+        df['date'] = df['date'].astype(np.datetime64)
+        df['commodity_code'] = code
+
+        data_frames.append(df)
+
+    result = pd.concat(data_frames, axis=0).reset_index(drop=True)
+    return result
