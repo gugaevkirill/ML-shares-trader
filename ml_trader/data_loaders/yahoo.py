@@ -83,7 +83,7 @@ def download_ticker_base(ticker: str, base_path: str) -> None:
     result.update(b1)
     result.update(b2)
 
-    filepath = '{}/yahoo/base/{}.json'.format(base_path, ticker)
+    filepath = '{}/{}.json'.format(base_path, ticker)
     save_json(filepath, result)
 
 
@@ -107,13 +107,13 @@ def download_ticker_quarterly(ticker: str, base_path: str) -> None:
     json_data = r.json()
     quarterly_df = _parse_quarterly_json(json_data)
 
-    filepath = '{}/yahoo/quarterly/{}.csv'.format(base_path, ticker)
+    filepath = '{}/{}.csv'.format(base_path, ticker)
     check_create_folder(filepath)
     quarterly_df.to_csv(filepath, index=False)
 
 
 def download_yahoo(ticker: str, base_path: str) -> None:
-    download_ticker_base(ticker, base_path=base_path)
+    download_ticker_base(ticker, base_path=base_path + '/yahoo/base')
     time.sleep(np.random.uniform(0, 0.5))
-    download_ticker_quarterly(ticker, base_path=base_path)
+    download_ticker_quarterly(ticker, base_path=base_path + '/yahoo/quarterly')
     time.sleep(np.random.uniform(0, 0.5))
