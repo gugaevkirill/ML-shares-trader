@@ -3,6 +3,7 @@ from typing import Any, List, Union
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 
 class LogExpModel:
@@ -18,9 +19,9 @@ class LogExpModel:
 
 
 class EnsembleModel:
-    '''
+    """
     Trains ensemble of base_models using Bagging
-    '''
+    """
 
     def __init__(self, base_models: List, bagging_fraction: float = 0.8, models_cnt: int = 20):
         self.base_models = base_models
@@ -29,7 +30,7 @@ class EnsembleModel:
         self.models = []
 
     def fit(self, X: pd.DataFrame, y: pd.Series) -> None:
-        for _ in range(self.models_cnt):
+        for _ in tqdm(range(self.models_cnt)):
             idxs = np.random.randint(0, len(X), int(len(X) * self.bagging_fraction))
             curr_model = deepcopy(np.random.choice(self.base_models))
             curr_model.fit(X.iloc[idxs], y.iloc[idxs])
