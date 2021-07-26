@@ -24,14 +24,14 @@ if __name__ == '__main__':
     # Quandl #2
     multiprocess_ticker_download(
         path='datatables/SHARADAR/SF1?ticker={ticker}',
-        tickers=config["tickers_quandl"],
+        tickers=config["tickers"],
         base_path=datasets_path + '/quandl/quarterly',
     )
 
     # Quandl #3
     multiprocess_ticker_download(
         path='datatables/SHARADAR/DAILY?ticker={ticker}',
-        tickers=config["tickers_quandl"],
+        tickers=config["tickers"],
         base_path=datasets_path + '/quandl/daily',
     )
 

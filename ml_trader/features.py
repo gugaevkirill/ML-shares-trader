@@ -31,6 +31,9 @@ QUARTER_COLUMNS = [
 DAILY_WINDOWS = [100, 200, 400, 800]
 DAILY_AGG_COLUMNS = ["marketcap", "pe"]
 
+COMMODITY_WINDOWS = DAILY_WINDOWS
+COMMODITY_COLUMNS = ["price"]
+
 
 def calc_series_stats(series: Union[List[float], np.array]) -> Dict[str, float]:
     series = np.array(series).astype('float')
@@ -105,7 +108,7 @@ def compute_df_daily_ticker(
 
         # Date to start counting daily features from
         curr_date = np.datetime64(curr_data['date'].values[0])
-        curr_daily_data = df_daily_ticker[curr_daily_data['date'] < curr_date]
+        curr_daily_data = df_daily_ticker[df_daily_ticker['date'] < curr_date]
         if not len(curr_daily_data):
             continue
 
@@ -124,6 +127,52 @@ def compute_df_daily_ticker(
 
                 for s_name, s_value in zip(['series', 'diffs'], [series, diffs]):
                     name_prefix = 'daily_{}_{}_{}'.format(s_name, window, col)
+                    stats = calc_series_stats(s_value)
+                    for k, v in stats.items():
+                        features['{}_{}'.format(name_prefix, k)] = v
+
+        result.append(features)
+
+    return result
+
+
+def compute_df_commodity_ticker(
+        df_quarterly_ticker: pd.DataFrame,
+        df_commodity_ticker: pd.DataFrame,
+        ticker: str,
+) -> List[Dict[str, Any]]:
+    data_len = len(df_quarterly_ticker)
+    max_bq = min(MAX_BACK_QUARTER, data_len - 1)
+    min_bq = min(MIN_BACK_QUARTER, data_len - 1)
+    assert min_bq <= max_bq
+
+    result: List[Dict[str, Any]] = []
+    for back_quarter in range(min_bq, max_bq):
+        curr_data = df_quarterly_ticker[back_quarter:]
+        if not len(curr_data):
+            continue
+
+        # Date to start counting daily features from
+        curr_date = np.datetime64(curr_data['date'].values[0])
+        curr_commodity_data = df_commodity_ticker[df_commodity_ticker['date'] < curr_date]
+        if not len(curr_commodity_data):
+            continue
+
+        features = {
+            'ticker': ticker,
+            'date': curr_date,
+        }
+        for col in COMMODITY_COLUMNS:
+            for window in COMMODITY_WINDOWS:
+                # Calculate window features
+                # Series - list of col values (from newest to old)
+                # Diffs - list of fare diffs (from old to new)
+                #   direction does not matter for statistics like min, max, std, mean
+                series = curr_commodity_data[col].values[:window].astype('float')
+                diffs = np.diff(series[::-1])
+
+                for s_name, s_value in zip(['series', 'diffs'], [series, diffs]):
+                    name_prefix = 'commodity_{}_{}_{}'.format(s_name, window, col)
                     stats = calc_series_stats(s_value)
                     for k, v in stats.items():
                         features['{}_{}'.format(name_prefix, k)] = v
